@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Soft Ring Lab</title>
+  <meta name="description" content="An animated SVG soft-body ring simulation: elastic, tear-resistant rings that stretch from the inside and pulse on a rhythm.">
+  <meta name="theme-color" content="#1b1220">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='10' fill='none' stroke='%23f2a593' stroke-width='6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Soft Ring Lab</h1>
+    <p class="sub">Swipe up on the ring to stretch it from the inside. Let go and it springs back.</p>
+  </header>
+
+  <main class="layout">
+    <section class="stage-wrap">
+      <svg id="stage" viewBox="0 0 600 600" role="img" aria-label="Soft elastic ring simulation. Swipe up or press the up arrow to stretch it.">
+        <defs>
+          <radialGradient id="flesh" cx="50%" cy="45%" r="60%">
+            <stop offset="0%" stop-color="var(--flesh-hi)"/>
+            <stop offset="55%" stop-color="var(--flesh)"/>
+            <stop offset="100%" stop-color="var(--flesh-lo)"/>
+          </radialGradient>
+          <radialGradient id="probeGrad" cx="40%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+            <stop offset="60%" stop-color="#bfe6ff" stop-opacity="0.22"/>
+            <stop offset="100%" stop-color="#7cc4ff" stop-opacity="0.10"/>
+          </radialGradient>
+          <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6"/>
+          </filter>
+          <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="14"/>
+          </filter>
+        </defs>
+        <g id="world">
+          <path id="halo" fill="var(--flesh)" opacity="0.18" filter="url(#glow)"/>
+          <path id="body" fill="url(#flesh)" fill-rule="evenodd"/>
+          <path id="sheen" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="10" filter="url(#soft)"/>
+          <path id="innerShade" fill="none" stroke="var(--flesh-deep)" stroke-opacity="0.65" stroke-width="9" filter="url(#soft)"/>
+          <g id="strain"></g>
+          <circle id="probe" cx="300" cy="300" r="0" fill="url(#probeGrad)" stroke="#d9f0ff" stroke-opacity="0.5" stroke-width="1.5"/>
+        </g>
+        <g id="hint" class="hint">
+          <path d="M300 520 l0 -46 m-14 14 l14 -14 l14 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="300" y="552" text-anchor="middle">swipe up</text>
+        </g>
+      </svg>
+
+      <div class="hud" aria-live="polite">
+        <div class="stat"><span class="k">Stretch</span><span class="v" id="stStretch">0%</span></div>
+        <div class="stat"><span class="k">Peak strain</span><span class="v" id="stStrain">0%</span></div>
+        <div class="stat"><span class="k">Integrity</span><span class="v" id="stIntegrity">100%</span></div>
+        <div class="stat"><span class="k">Muscle</span><span class="v" id="stTone"><i id="beat"></i><b id="stPhase">relaxed</b></span></div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="group">
+        <h2>Ring shape</h2>
+        <div class="seg" role="radiogroup" aria-label="Ring shape">
+          <button type="button" role="radio" data-shape="O" aria-checked="true">O</button>
+          <button type="button" role="radio" data-shape="V" aria-checked="false">V</button>
+          <button type="button" role="radio" data-shape="A" aria-checked="false">A</button>
+        </div>
+        <p class="note" id="shapeNote"></p>
+      </div>
+
+      <div class="group">
+        <h2>Material <span class="tag" id="matTag">O</span></h2>
+        <label class="row"><span>Stiffness</span><input type="range" id="stiffness" min="0.1" max="1" step="0.01"><output id="stiffnessOut"></output></label>
+        <label class="row"><span>Stretch limit</span><input type="range" id="stretch" min="1.2" max="3" step="0.05"><output id="stretchOut"></output></label>
+        <label class="row"><span>Softness</span><input type="range" id="softness" min="0" max="1" step="0.01"><output id="softnessOut"></output></label>
+        <label class="row"><span>Tear resistance</span><input type="range" id="tear" min="0" max="1" step="0.01"><output id="tearOut"></output></label>
+      </div>
+
+      <div class="group">
+        <h2>Muscle rhythm</h2>
+        <label class="row switch"><span>Pulse</span><input type="checkbox" id="pulse" checked></label>
+        <label class="row"><span>Tempo</span><input type="range" id="bpm" min="10" max="120" step="1" value="36"><output id="bpmOut"></output></label>
+        <label class="row"><span>Tone</span><input type="range" id="tone" min="0" max="0.5" step="0.01" value="0.22"><output id="toneOut"></output></label>
+      </div>
+
+      <div class="group">
+        <h2>Expander</h2>
+        <label class="row"><span>Hold open</span><input type="range" id="hold" min="0" max="1" step="0.01" value="0"><output id="holdOut"></output></label>
+        <p class="note">Swipe up on the stage, scroll, or use the ↑ / ↓ keys. The swipe adds to the hold level.</p>
+        <button type="button" class="ghost" id="reset">Reset ring</button>
+      </div>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
