@@ -29,6 +29,16 @@
             <stop offset="60%" stop-color="#bfe6ff" stop-opacity="0.22"/>
             <stop offset="100%" stop-color="#7cc4ff" stop-opacity="0.10"/>
           </radialGradient>
+          <radialGradient id="throatGrad" cx="50%" cy="55%" r="60%">
+            <stop offset="0%" stop-color="#1a0509"/>
+            <stop offset="45%" stop-color="#4a141e"/>
+            <stop offset="100%" stop-color="#8a3342"/>
+          </radialGradient>
+          <linearGradient id="uvulaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#b9566a"/>
+            <stop offset="100%" stop-color="#8a3342"/>
+          </linearGradient>
+          <clipPath id="throatClip"><path id="throatClipPath"/></clipPath>
           <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="6"/>
           </filter>
@@ -38,6 +48,15 @@
         </defs>
         <g id="world">
           <path id="halo" fill="var(--flesh)" opacity="0.18" filter="url(#glow)"/>
+          <g id="throat" clip-path="url(#throatClip)">
+            <path id="throatFill" fill="url(#throatGrad)"/>
+            <g id="throatDetail">
+              <ellipse cx="300" cy="318" rx="46" ry="30" fill="#0d0205" opacity="0.8" filter="url(#soft)"/>
+              <path d="M300 238 C288 238 284 252 288 266 C291 276 291 284 300 288 C309 284 309 276 312 266 C316 252 312 238 300 238 Z" fill="url(#uvulaGrad)"/>
+              <path d="M293 250 C294 262 295 272 299 280" fill="none" stroke="#e08a9a" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round"/>
+              <path d="M214 300 C240 270 270 262 300 262 C330 262 360 270 386 300" fill="none" stroke="#a24558" stroke-opacity="0.5" stroke-width="3" filter="url(#soft)"/>
+            </g>
+          </g>
           <path id="body" fill="url(#flesh)" fill-rule="evenodd"/>
           <path id="sheen" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="10" filter="url(#soft)"/>
           <path id="innerShade" fill="none" stroke="var(--flesh-deep)" stroke-opacity="0.65" stroke-width="9" filter="url(#soft)"/>

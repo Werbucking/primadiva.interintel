@@ -350,6 +350,7 @@
   // ---------- rendering ----------
   const el = id => document.getElementById(id);
   const svg = el("stage");
+  const throat = el("throat"), throatFill = el("throatFill"), throatClipPath = el("throatClipPath");
   const body = el("body"), halo = el("halo"), sheen = el("sheen"), innerShade = el("innerShade");
   const probe = el("probe"), strainG = el("strain"), hint = el("hint");
   const ix = new Float64Array(N), iy = new Float64Array(N), ox = new Float64Array(N), oy = new Float64Array(N);
@@ -381,6 +382,10 @@
     const outerD = smoothPath(ox, oy, false);
     const innerD = smoothPath(ix, iy, true);
     body.setAttribute("d", outerD + innerD);
+    const openD = smoothPath(ix, iy, false);
+    throatFill.setAttribute("d", openD);
+    throatClipPath.setAttribute("d", openD);
+    throat.style.display = shapeKey === "O" ? "" : "none";
     halo.setAttribute("d", outerD);
     innerShade.setAttribute("d", smoothPath(ix, iy, false));
 
