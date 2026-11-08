@@ -26,9 +26,10 @@
   // damping (more jiggle), tear sets how hard the lock-up is.
   const SHAPES = {
     O: {
-      label: "Round and even. Medium stiffness, stretches evenly all the way round.",
+      label: "A mouth. Full lips with a cupid's bow, medium stiffness, stretches evenly all the way round.",
       stiffness: 0.55, stretch: 2.0, softness: 0.55, tear: 0.85,
-      outline: () => circle(92),
+      outline: () => mouthOpening(),
+      thickness: lipThickness,
       palette: ["#ffd9c9", "#ee9f8f", "#c96f6f", "#8c3d4f"],
     },
     V: {
@@ -45,14 +46,32 @@
     },
   };
 
+  const MOUTH_ICON = '<svg class="mouth-icon" viewBox="0 0 32 20" aria-label="Mouth" role="img"><path d="M1 10 C6 3 10 1.5 13 3 C14.5 3.8 15.3 4.6 16 4.6 C16.7 4.6 17.5 3.8 19 3 C22 1.5 26 3 31 10 C26 17 21 19 16 19 C11 19 6 17 1 10 Z" fill="currentColor"/><path d="M4 10 C9 11.6 12.5 12.2 16 12.2 C19.5 12.2 23 11.6 28 10 C23 9.6 19.5 9.4 16 9.6 C12.5 9.4 9 9.6 4 10 Z" fill="#2a1520" opacity="0.75"/></svg>';
+
   // ---------- geometry helpers ----------
-  function circle(r) {
+  // Mouth: the opening is a wide almond with soft corners, a slightly
+  // flatter upper edge and a rounder lower one.
+  const MOUTH_W = 112, MOUTH_TOP = 50, MOUTH_BOT = 64;
+  function mouthOpening() {
     const pts = [];
     for (let i = 0; i < 240; i++) {
-      const a = (i / 240) * Math.PI * 2 - Math.PI / 2;
-      pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+      const t = (i / 240) * Math.PI * 2;
+      const c = Math.cos(t), sn = Math.sin(t);
+      const b = sn < 0 ? MOUTH_TOP : MOUTH_BOT;
+      pts.push([c * MOUTH_W, sn * b * (0.45 + 0.55 * Math.abs(sn))]);
     }
     return pts;
+  }
+
+  // Lip thickness around the opening: thin at the corners, a full lower lip,
+  // and an upper lip with two peaks and a dip in the middle (cupid's bow).
+  function lipThickness(x, y) {
+    const u = Math.max(-1, Math.min(1, x / MOUTH_W));
+    const body = Math.pow(1 - u * u, 0.6);
+    if (y > 0) return 16 + 56 * body;
+    const bow = 1 + 0.22 * Math.exp(-Math.pow((Math.abs(u) - 0.3) / 0.16, 2))
+                  - 0.3 * Math.exp(-Math.pow(u / 0.1, 2));
+    return 16 + 40 * body * bow;
   }
 
   // Chaikin corner cutting rounds a polygon into a soft outline.
@@ -162,7 +181,11 @@
     const s = SHAPES[key];
     const inner = resample(s.outline(), N);
     const nrm = normals(inner);
-    const outer = inner.map((p, i) => [p[0] + nrm[i][0] * THICK, p[1] + nrm[i][1] * THICK]);
+    const th = s.thickness || (() => THICK);
+    const outer = inner.map((p, i) => {
+      const t = th(p[0], p[1]);
+      return [p[0] + nrm[i][0] * t, p[1] + nrm[i][1] * t];
+    });
 
     let avg = 0;
     for (let i = 0; i < N; i++) {
@@ -545,7 +568,8 @@
     ui.softness.value = mat.softness; ui.softnessOut.textContent = pct(mat.softness);
     ui.tear.value = mat.tear; ui.tearOut.textContent = pct(mat.tear);
     ui.note.textContent = SHAPES[shapeKey].label;
-    ui.tag.textContent = shapeKey;
+    if (shapeKey === "O") ui.tag.innerHTML = MOUTH_ICON;
+    else ui.tag.textContent = shapeKey;
   }
 
   for (const key of ["stiffness", "stretch", "softness", "tear"]) {
