@@ -34,6 +34,7 @@
       palette: ["#ffd9c9", "#ee9f8f", "#c96f6f", "#8c3d4f"],
     },
     V: {
+      name: "Meat cavity",
       label: "Narrow and firm. The stiffest ring, with the shortest stretch.",
       stiffness: 0.85, stretch: 1.55, softness: 0.35, tear: 0.9,
       outline: () => roundPoly([[-112, -78], [112, -78], [0, 102]], 4),
@@ -612,7 +613,7 @@
     ui.tear.value = mat.tear; ui.tearOut.textContent = pct(mat.tear);
     ui.note.textContent = SHAPES[shapeKey].label;
     if (shapeKey === "O") ui.tag.innerHTML = MOUTH_ICON;
-    else ui.tag.textContent = shapeKey;
+    else ui.tag.textContent = SHAPES[shapeKey].name || shapeKey;
   }
 
   for (const key of ["stiffness", "stretch", "softness", "tear"]) {
