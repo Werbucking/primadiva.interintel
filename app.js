@@ -32,9 +32,10 @@
       palette: ["#ffd9c9", "#ee9f8f", "#c96f6f", "#8c3d4f"],
     },
     V: {
-      label: "Narrow and firm. The stiffest ring, with the shortest stretch.",
+      label: "Narrow and firm. A kite-shaped outline with a deep point. The stiffest ring, with the shortest stretch.",
       stiffness: 0.85, stretch: 1.55, softness: 0.35, tear: 0.9,
-      outline: () => roundPoly([[-112, -78], [112, -78], [0, 102]], 4),
+      // abstract geometric kite: shallow peak on top, long point below
+      outline: () => roundPoly([[-108, -52], [0, -92], [108, -52], [0, 112]], 3),
       palette: ["#ffe0cf", "#f0aa8c", "#cf7a66", "#93453f"],
     },
     A: {
