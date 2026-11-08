@@ -12,7 +12,7 @@
 <body>
   <header class="top">
     <h1>Soft Ring Lab</h1>
-    <p class="sub">Swipe up to push the probe through the ring and stretch it from the inside. Let go and it slides back out.</p>
+    <p class="sub">Swipe up to push the probe from your side of the screen into the ring and stretch it from the inside. Let go and it slides back out toward you.</p>
   </header>
 
   <main class="layout">
@@ -42,7 +42,13 @@
           <path id="sheen" fill="none" stroke="#fff" stroke-opacity="0.22" stroke-width="10" filter="url(#soft)"/>
           <path id="innerShade" fill="none" stroke="var(--flesh-deep)" stroke-opacity="0.65" stroke-width="9" filter="url(#soft)"/>
           <g id="strain"></g>
-          <circle id="probe" cx="300" cy="300" r="0" fill="url(#probeGrad)" stroke="#d9f0ff" stroke-opacity="0.5" stroke-width="1.5"/>
+          <!-- the probe comes from the viewer's side: you look down its length -->
+          <g id="probeG" opacity="0">
+            <circle id="probeShaft" cx="300" cy="300" r="0" fill="url(#probeGrad)" stroke="#d9f0ff" stroke-opacity="0.35" stroke-width="2"/>
+            <g id="probeContours" fill="none" stroke="#d9f0ff"></g>
+            <circle id="probeContact" cx="300" cy="300" r="0" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+            <circle id="probeTip" cx="300" cy="300" r="0" fill="#ffffff" fill-opacity="0.35"/>
+          </g>
         </g>
         <g id="hint" class="hint">
           <path d="M300 520 l0 -46 m-14 14 l14 -14 l14 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -50,7 +56,7 @@
         </g>
       </svg>
 
-      <figure class="side" aria-label="Side view of the probe passing through the ring">
+      <figure class="side" aria-label="Side view: the probe comes from the viewer's side, at the top, and pushes down through the ring">
         <svg viewBox="0 0 200 200">
           <defs>
             <linearGradient id="sideFlesh" x1="0" y1="0" x2="0" y2="1">
@@ -66,7 +72,8 @@
             <clipPath id="sideClip"><rect width="200" height="200" rx="14"/></clipPath>
           </defs>
           <g clip-path="url(#sideClip)">
-            <line x1="0" y1="112" x2="200" y2="112" stroke="currentColor" stroke-opacity="0.15" stroke-dasharray="4 5"/>
+            <line x1="0" y1="92" x2="200" y2="92" stroke="currentColor" stroke-opacity="0.15" stroke-dasharray="4 5"/>
+            <text x="10" y="18" text-anchor="start" font-size="11" fill="currentColor" opacity="0.8">▼ you</text>
             <path id="sideProbe" fill="url(#sideProbeGrad)" stroke="#d9f0ff" stroke-opacity="0.6"/>
             <path id="sideWallL" fill="url(#sideFlesh)"/>
             <path id="sideWallR" fill="url(#sideFlesh)"/>
@@ -113,7 +120,7 @@
       <div class="group">
         <h2>Probe</h2>
         <label class="row"><span>Hold depth</span><input type="range" id="hold" min="0" max="1" step="0.01" value="0"><output id="holdOut"></output></label>
-        <p class="note">Swipe up on the stage to push the probe in, or scroll, or use the ↑ / ↓ keys. A swipe goes deeper than the held depth and slides back when you let go.</p>
+        <p class="note">Swipe up on the stage to push the probe in from your side, or scroll, or use the ↑ / ↓ keys. A swipe goes deeper than the held depth and slides back when you let go.</p>
         <button type="button" class="ghost" id="reset">Reset ring</button>
       </div>
     </aside>

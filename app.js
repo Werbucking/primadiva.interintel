@@ -8,7 +8,8 @@
  * the ring. Its cross-section where it crosses the ring plane widens as it
  * goes deeper and pushes the inner edge outward; the ring pushes back, so
  * stiffer shapes open less. Friction drags the inner lip along with the
- * probe, which the side view shows. A rhythm shortens the springs' rest lengths so the ring
+ * probe, which the side view shows. The probe comes from the viewer's side
+ * of the screen, so the main view looks down its length. A rhythm shortens the springs' rest lengths so the ring
  * tightens and relaxes like a muscle.
  */
 (() => {
@@ -328,7 +329,16 @@
   const el = id => document.getElementById(id);
   const svg = el("stage");
   const body = el("body"), halo = el("halo"), sheen = el("sheen"), innerShade = el("innerShade");
-  const probe = el("probe"), strainG = el("strain"), hint = el("hint");
+  const strainG = el("strain"), hint = el("hint");
+  const probeG = el("probeG"), probeShaft = el("probeShaft"), probeContact = el("probeContact"),
+    probeTip = el("probeTip"), probeContours = el("probeContours");
+  const contourRings = [];
+  for (let i = 0; i < 4; i++) {
+    const c = document.createElementNS(SVGNS, "circle");
+    c.setAttribute("cx", C.x); c.setAttribute("cy", C.y);
+    probeContours.appendChild(c);
+    contourRings.push(c);
+  }
   const ix = new Float64Array(N), iy = new Float64Array(N), ox = new Float64Array(N), oy = new Float64Array(N);
 
   const strainLines = [];
@@ -380,7 +390,7 @@
       l.setAttribute("stroke-opacity", Math.min(0.85, s * 0.7).toFixed(2));
     }
 
-    probe.setAttribute("r", state.probeR.toFixed(1));
+    renderProbe();
     renderSide();
 
     // muscle tone also deepens the colour slightly
@@ -428,17 +438,44 @@
     state.lip += (drag - state.lip) * Math.min(1, dt * (3 + mat.stiffness * 6));
   }
 
+  // Looking down the probe from the viewer's side: the near shaft is a
+  // translucent disc on top of everything, the nose shows as rings that
+  // shrink toward the tip, and the bright ring is where it meets the ring.
+  function renderProbe() {
+    const R = probeMax();
+    // fades in as it approaches from the viewer, fully there once in contact
+    const vis = clamp((state.tipZ + 0.2) / 0.35, 0, 1);
+    probeG.setAttribute("opacity", vis.toFixed(2));
+    if (vis <= 0) return;
+    // the near end is closer to the viewer, so it looks a little larger
+    // while the probe is still out in front of the ring
+    const near = 1 + 0.18 * clamp(1 - state.tipZ, 0, 1);
+    probeShaft.setAttribute("r", (R * near).toFixed(1));
+    for (let i = 0; i < contourRings.length; i++) {
+      const s = (i + 1) / (contourRings.length + 1);   // behind the tip, in nose lengths
+      const c = contourRings[i];
+      c.setAttribute("r", (R * noseProfile(s)).toFixed(1));
+      // rings already past the ring plane sit behind the flesh, so dim them
+      const beyond = s < state.tipZ;
+      c.setAttribute("stroke-opacity", (beyond ? 0.12 : 0.3).toFixed(2));
+      c.setAttribute("stroke-dasharray", beyond ? "3 5" : "none");
+    }
+    probeContact.setAttribute("r", state.probeR.toFixed(1));
+    probeContact.setAttribute("stroke-opacity", state.probeR > 2 ? "0.7" : "0");
+    probeTip.setAttribute("r", (6 + 4 * clamp(1 - state.tipZ, 0, 1)).toFixed(1));
+  }
+
   // ---------- side view ----------
   const side = {
     probe: el("sideProbe"), wallL: el("sideWallL"), wallR: el("sideWallR"),
   };
-  const SV = { cx: 100, plane: 112, sc: 0.36, h: 32, bottom: 200, top: 0 };
+  const SV = { cx: 100, plane: 92, sc: 0.36, h: 32, bottom: 200, top: 0 };
 
   function wallPath(xi, xo, lip, dir) {
     // one half of the ring's cross-section: a soft rounded slab whose inner
     // lip is pulled up or down by friction
     const h = SV.h, y = SV.plane;
-    const ly = y - lip * 22;           // lip centre
+    const ly = y + lip * 22;           // lip centre (dragged away from the viewer as it goes in)
     const xm = (xi + xo) / 2;
     const d = dir; // -1 left, +1 right (outward)
     return `M${xo} ${y - h / 2}` +
@@ -458,19 +495,20 @@
     side.wallL.setAttribute("d", wallPath(SV.cx - ri, SV.cx - ro, state.lip, -1));
     side.wallR.setAttribute("d", wallPath(SV.cx + ri, SV.cx + ro, state.lip, 1));
 
-    // probe silhouette, tip pointing up, shaft running off the bottom
+    // probe silhouette coming down from the viewer at the top: tip points
+    // down, shaft runs off the top edge
     const R = probeMax() * SV.sc;
     const nose = R * 1.25;
-    const tipY = SV.plane - state.tipZ * nose;
+    const tipY = SV.plane + state.tipZ * nose;
     let right = "", left = [];
     for (let k = 0; k <= 16; k++) {
       const s = k / 16;
       const x = R * noseProfile(s);
-      const y = tipY + s * nose;
+      const y = tipY - s * nose;
       right += `L${(SV.cx + x).toFixed(1)} ${y.toFixed(1)}`;
       left.unshift(`L${(SV.cx - x).toFixed(1)} ${y.toFixed(1)}`);
     }
-    const end = Math.max(tipY + nose, SV.bottom + 10);
+    const end = Math.min(tipY - nose, -10);
     const d = `M${SV.cx} ${tipY.toFixed(1)}${right}L${SV.cx + R} ${end}L${SV.cx - R} ${end}${left.join("")}Z`;
     side.probe.setAttribute("d", d);
   }
