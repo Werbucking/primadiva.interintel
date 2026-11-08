@@ -175,3 +175,5 @@ input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent);
   font: inherit;
 }
 .ghost:hover { border-color: var(--accent); }
+
+.mouth-icon { width: 1.6em; height: 1em; vertical-align: middle; display: inline-block; }
