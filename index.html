@@ -12,7 +12,7 @@
 <body>
   <header class="top">
     <h1>Soft Ring Lab</h1>
-    <p class="sub">Swipe up on the ring to stretch it from the inside. Let go and it springs back.</p>
+    <p class="sub">Swipe up to push the probe through the ring and stretch it from the inside. Let go and it slides back out.</p>
   </header>
 
   <main class="layout">
@@ -46,11 +46,37 @@
         </g>
         <g id="hint" class="hint">
           <path d="M300 520 l0 -46 m-14 14 l14 -14 l14 14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <text x="300" y="552" text-anchor="middle">swipe up</text>
+          <text x="300" y="552" text-anchor="middle">swipe up to push in</text>
         </g>
       </svg>
 
+      <figure class="side" aria-label="Side view of the probe passing through the ring">
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <linearGradient id="sideFlesh" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--flesh-hi)"/>
+              <stop offset="60%" stop-color="var(--flesh)"/>
+              <stop offset="100%" stop-color="var(--flesh-lo)"/>
+            </linearGradient>
+            <linearGradient id="sideProbeGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#7cc4ff" stop-opacity="0.35"/>
+              <stop offset="35%" stop-color="#e6f5ff" stop-opacity="0.75"/>
+              <stop offset="100%" stop-color="#7cc4ff" stop-opacity="0.3"/>
+            </linearGradient>
+            <clipPath id="sideClip"><rect width="200" height="200" rx="14"/></clipPath>
+          </defs>
+          <g clip-path="url(#sideClip)">
+            <line x1="0" y1="112" x2="200" y2="112" stroke="currentColor" stroke-opacity="0.15" stroke-dasharray="4 5"/>
+            <path id="sideProbe" fill="url(#sideProbeGrad)" stroke="#d9f0ff" stroke-opacity="0.6"/>
+            <path id="sideWallL" fill="url(#sideFlesh)"/>
+            <path id="sideWallR" fill="url(#sideFlesh)"/>
+          </g>
+        </svg>
+        <figcaption>side view</figcaption>
+      </figure>
+
       <div class="hud" aria-live="polite">
+        <div class="stat"><span class="k">Depth</span><span class="v" id="stDepth">0%</span></div>
         <div class="stat"><span class="k">Stretch</span><span class="v" id="stStretch">0%</span></div>
         <div class="stat"><span class="k">Peak strain</span><span class="v" id="stStrain">0%</span></div>
         <div class="stat"><span class="k">Integrity</span><span class="v" id="stIntegrity">100%</span></div>
@@ -85,9 +111,9 @@
       </div>
 
       <div class="group">
-        <h2>Expander</h2>
-        <label class="row"><span>Hold open</span><input type="range" id="hold" min="0" max="1" step="0.01" value="0"><output id="holdOut"></output></label>
-        <p class="note">Swipe up on the stage, scroll, or use the ↑ / ↓ keys. The swipe adds to the hold level.</p>
+        <h2>Probe</h2>
+        <label class="row"><span>Hold depth</span><input type="range" id="hold" min="0" max="1" step="0.01" value="0"><output id="holdOut"></output></label>
+        <p class="note">Swipe up on the stage to push the probe in, or scroll, or use the ↑ / ↓ keys. A swipe goes deeper than the held depth and slides back when you let go.</p>
         <button type="button" class="ghost" id="reset">Reset ring</button>
       </div>
     </aside>

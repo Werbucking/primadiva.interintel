@@ -4,9 +4,11 @@
  * edge, thickness and shear springs. The outer loop is tethered to its rest
  * shape like tissue anchored in place. Springs stiffen sharply as they near
  * the stretch limit, which is what gives the material its high tear
- * resistance. A circular expander grows from the centre on swipe up and
- * pushes the inner edge outward; the ring pushes back, so stiffer shapes
- * open less. A rhythm shortens the springs' rest lengths so the ring
+ * resistance. Swiping up pushes a tapered, round-nosed probe up through
+ * the ring. Its cross-section where it crosses the ring plane widens as it
+ * goes deeper and pushes the inner edge outward; the ring pushes back, so
+ * stiffer shapes open less. Friction drags the inner lip along with the
+ * probe, which the side view shows. A rhythm shortens the springs' rest lengths so the ring
  * tightens and relaxes like a muscle.
  */
 (() => {
@@ -136,7 +138,12 @@
   const mat = {};
 
   const state = {
-    probeR: 0,        // current expander radius
+    probeR: 0,        // current probe radius at the ring plane
+    depth: 0,         // 0..1 how far the probe has been pushed in
+    depthVel: 0,      // depth change per second, for friction drag
+    tipZ: -0.2,       // probe tip height relative to the ring plane, in nose lengths
+    probeTarget: 0,
+    lip: 0,           // inner lip deflection from friction, -1..1
     swipe: 0,         // 0..1 from the active gesture
     hold: 0,          // 0..1 from the slider
     pulse: true,
@@ -277,10 +284,8 @@
       px[i] += vx[i] * DT; py[i] += vy[i] * DT;
     }
 
-    // expander radius: driven toward its target, pushed back by the ring
-    const drive = Math.max(state.swipe, state.hold);
-    const target = drive * state.baseInner * Math.min(mat.stretch, 2.2) * 0.95;
-    state.probeR += (target - state.probeR) * Math.min(1, 6 * DT);
+    // probe radius: follows the probe's profile, pushed back by the ring
+    state.probeR += (state.probeTarget - state.probeR) * Math.min(1, 10 * DT);
     state.probeR -= (push / N) * 0.9;
     if (state.probeR < 0) state.probeR = 0;
   }
@@ -376,6 +381,7 @@
     }
 
     probe.setAttribute("r", state.probeR.toFixed(1));
+    renderSide();
 
     // muscle tone also deepens the colour slightly
     const c = state.contraction * state.tone;
@@ -385,7 +391,7 @@
   // ---------- HUD ----------
   const pct = v => `${Math.round(v * 100)}%`;
   const hud = {
-    stretch: el("stStretch"), strain: el("stStrain"), integrity: el("stIntegrity"),
+    depth: el("stDepth"), stretch: el("stStretch"), strain: el("stStrain"), integrity: el("stIntegrity"),
     phase: el("stPhase"), beat: el("beat"),
   };
   let hudTick = 0;
@@ -394,12 +400,79 @@
     hud.beat.style.transform = `scale(${(0.7 + c * 0.8).toFixed(2)})`;
     hud.beat.style.opacity = (0.45 + c * 0.55).toFixed(2);
     if (++hudTick % 6) return;
+    hud.depth.textContent = pct(state.depth);
     hud.stretch.textContent = pct(state.stretchPct);
     hud.strain.textContent = pct(state.peakStrain);
     hud.integrity.textContent = pct(state.integrity);
     hud.integrity.style.color = state.integrity < 0.6 ? "#ffb36b" : "";
     hud.phase.textContent = !state.pulse || state.tone < 0.01 ? "still"
       : c > 0.6 ? "tight" : c > 0.25 ? (state.phaseDir > 0 ? "tightening" : "relaxing") : "relaxed";
+  }
+
+  // ---------- probe ----------
+  // Round-nosed taper: radius grows along an elliptical nose, then a
+  // straight shaft. s is the distance behind the tip in nose lengths.
+  const noseProfile = s => (s <= 0 ? 0 : s >= 1 ? 1 : Math.sqrt(1 - (1 - s) * (1 - s)));
+  const probeMax = () => state.baseInner * Math.min(mat.stretch, 2.2) * 0.95;
+
+  function updateProbe(dt) {
+    const drive = Math.max(state.swipe, state.hold);
+    const prev = state.depth;
+    state.depth += (drive - state.depth) * Math.min(1, dt * 5);
+    state.depthVel = (state.depth - prev) / Math.max(dt, 1e-4);
+    state.tipZ = -0.2 + state.depth * 1.25;
+    state.probeTarget = noseProfile(state.tipZ) * probeMax();
+    // friction: the inner lip is dragged the way the probe moves while in contact
+    const contact = state.probeR > 2 ? Math.min(1, state.probeR / 20) : 0;
+    const drag = clamp(state.depthVel * 1.6, -1, 1) * contact * (0.4 + mat.softness * 0.6);
+    state.lip += (drag - state.lip) * Math.min(1, dt * (3 + mat.stiffness * 6));
+  }
+
+  // ---------- side view ----------
+  const side = {
+    probe: el("sideProbe"), wallL: el("sideWallL"), wallR: el("sideWallR"),
+  };
+  const SV = { cx: 100, plane: 112, sc: 0.36, h: 32, bottom: 200, top: 0 };
+
+  function wallPath(xi, xo, lip, dir) {
+    // one half of the ring's cross-section: a soft rounded slab whose inner
+    // lip is pulled up or down by friction
+    const h = SV.h, y = SV.plane;
+    const ly = y - lip * 22;           // lip centre
+    const xm = (xi + xo) / 2;
+    const d = dir; // -1 left, +1 right (outward)
+    return `M${xo} ${y - h / 2}` +
+      `C${xm} ${y - h / 2 - 2} ${xi + d * 6} ${ly - h / 2} ${xi} ${ly - h * 0.3}` +
+      `Q${xi - d * 4} ${ly} ${xi} ${ly + h * 0.3}` +
+      `C${xi + d * 6} ${ly + h / 2} ${xm} ${y + h / 2 + 2} ${xo} ${y + h / 2}` +
+      `Q${xo + d * 8} ${y} ${xo} ${y - h / 2}Z`;
+  }
+
+  function renderSide() {
+    let ri = 0, ro = 0;
+    for (let i = 0; i < N; i++) {
+      ri += Math.hypot(px[i] - C.x, py[i] - C.y);
+      ro += Math.hypot(px[N + i] - C.x, py[N + i] - C.y);
+    }
+    ri = (ri / N) * SV.sc; ro = (ro / N) * SV.sc;
+    side.wallL.setAttribute("d", wallPath(SV.cx - ri, SV.cx - ro, state.lip, -1));
+    side.wallR.setAttribute("d", wallPath(SV.cx + ri, SV.cx + ro, state.lip, 1));
+
+    // probe silhouette, tip pointing up, shaft running off the bottom
+    const R = probeMax() * SV.sc;
+    const nose = R * 1.25;
+    const tipY = SV.plane - state.tipZ * nose;
+    let right = "", left = [];
+    for (let k = 0; k <= 16; k++) {
+      const s = k / 16;
+      const x = R * noseProfile(s);
+      const y = tipY + s * nose;
+      right += `L${(SV.cx + x).toFixed(1)} ${y.toFixed(1)}`;
+      left.unshift(`L${(SV.cx - x).toFixed(1)} ${y.toFixed(1)}`);
+    }
+    const end = Math.max(tipY + nose, SV.bottom + 10);
+    const d = `M${SV.cx} ${tipY.toFixed(1)}${right}L${SV.cx + R} ${end}L${SV.cx - R} ${end}${left.join("")}Z`;
+    side.probe.setAttribute("d", d);
   }
 
   // ---------- rhythm ----------
@@ -506,6 +579,7 @@
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     updateRhythm(dt);
+    updateProbe(dt);
     // the swipe springs back once the finger lifts
     if (!drag) state.swipe += (0 - state.swipe) * Math.min(1, dt * 2.2);
     const steps = Math.max(1, Math.round(dt / (1 / 60) * SUBSTEPS));
